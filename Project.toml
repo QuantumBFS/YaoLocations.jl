@@ -1,0 +1,13 @@
+name = "YaoLocations"
+uuid = "66df03fb-d475-48f7-b449-3d9064bf085b"
+authors = ["Roger-luo"]
+version = "0.1.0"
+
+[compat]
+julia = "1.4.1"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
