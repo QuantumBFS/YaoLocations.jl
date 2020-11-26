@@ -43,17 +43,24 @@ end
 
 # skip it if x is a location
 Locations(x::Locations) = x
-Locations(xs...) = Locations(xs)
 Locations(xs::NTuple{N,<:Locations}) where {N} = merge_locations(xs...)
-Locations(x::NTuple{N,T}) where {N,T} = throw(LocationError("expect Int, got $T"))
 
 Base.@propagate_inbounds Base.getindex(l::Locations, idx...) = Locations(getindex(l.storage, idx...))
 Base.length(l::Locations) = length(l.storage)
-Base.iterate(l::Locations) = iterate(l.storage)
-Base.iterate(l::Locations, st) = iterate(l.storage, st)
 Base.eltype(::Type{T}) where {T<:Locations} = Int
 Base.eltype(x::Locations) = Int
 Base.Tuple(x::Locations) = (x.storage...,)
+raw_locations(x::Locations) = x.storage
+
+function Base.iterate(l::Locations)
+    v, st = iterate(l.storage)
+    return Locations(v), st
+end
+
+function Base.iterate(l::Locations, st)
+    v, st = iterate(l.storage, st)
+    return Locations(v), st
+end
 
 struct LocationError <: Exception
     msg::String
@@ -120,15 +127,15 @@ function map_check_nothrow(parent::Locations{NTuple{N,Int}}, sub::Locations{Unit
     (1 <= sub.storage.start) && (sub.storage.stop <= N)
 end
 
-function map_check(parent::Locations{UnitRange{Int}}, sub::Locations{Int})
+function map_check_nothrow(parent::Locations{UnitRange{Int}}, sub::Locations{Int})
     1 <= sub.storage <= length(parent)
 end
 
-function map_check(parent::Locations{UnitRange{Int}}, sub::Locations{NTuple{N,Int}}) where {N}
+function map_check_nothrow(parent::Locations{UnitRange{Int}}, sub::Locations{NTuple{N,Int}}) where {N}
     all(x -> (1 <= x <= length(parent)), sub.storage)
 end
 
-function map_check(parent::Locations{UnitRange{Int}}, sub::Locations{UnitRange{Int}})
+function map_check_nothrow(parent::Locations{UnitRange{Int}}, sub::Locations{UnitRange{Int}})
     (1 <= sub.storage.start) && (sub.storage.stop <= length(parent))
 end
 
@@ -208,13 +215,14 @@ end
 # skip itself
 CtrlLocations(x::CtrlLocations) = x
 CtrlLocations(x::Locations) = CtrlLocations(x, _default_flags(length(x)))
+CtrlLocations(x::LocationStorageTypes) = CtrlLocations(Locations(x), _default_flags(length(x)))
 CtrlLocations(x::LocationStorageTypes, configs::NTuple{L, UInt8}) where L =
     CtrlLocations(Locations(x), flags(configs...))
-CtrlLocations(xs...) = CtrlLocations(Locations(xs...))
 
 Base.length(l::CtrlLocations) = length(l.storage)
 Base.iterate(l::CtrlLocations) = iterate(l.storage)
 Base.iterate(l::CtrlLocations, st) = iterate(l.storage, st)
+raw_locations(l::CtrlLocations) = raw_locations(l.storage)
 
 function Base.show(io::IO, x::Locations)
     print(io, "Locations(")
@@ -251,7 +259,6 @@ function print_locations(io::IO, x::CtrlLocations)
         for i in 1:nlocations
             l = x.storage.storage[i]
             if x.flags[i]
-                @show "pass"
                 printstyled(io, l; color=:light_blue)
             else
                 printstyled(io, "!", l; color = :light_blue)
@@ -278,7 +285,7 @@ Base.:(==)(l1::CtrlLocations, l2::CtrlLocations) =
 
 # parent location has to be Locations since CtrlLocations can't be parent
 @inline function Base.getindex(parent::Locations, sub::AbstractLocations)
-    map_check(parent, sub)
+    map_check(parent, sub) || map_error(parent, sub)
     return unsafe_mapping(parent, sub)
 end
 
