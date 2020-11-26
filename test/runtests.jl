@@ -48,3 +48,16 @@ end
     @test merge_locations(CtrlLocations((1, 2), (0x0, 0x1)), CtrlLocations((3, 4))) ==
           CtrlLocations((1, 2, 3, 4), (0x0, 0x1, 0x0, 0x0))
 end
+
+@testset "iterate" begin
+    locs = Locations(2:5)
+    @test collect(locs) == [Locations(k) for k in 2:5]
+
+    ctrl = CtrlLocations((1, 2, 3, 4), (0x0, 0x1, 0x0, 0x0))
+    @test collect(ctrl) == [
+        (Locations(1), true),
+        (Locations(2), false),
+        (Locations(3), true),
+        (Locations(4), true),
+    ]
+end

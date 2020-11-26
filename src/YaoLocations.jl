@@ -47,19 +47,14 @@ Locations(xs::NTuple{N,<:Locations}) where {N} = merge_locations(xs...)
 
 Base.@propagate_inbounds Base.getindex(l::Locations, idx...) = Locations(getindex(l.storage, idx...))
 Base.length(l::Locations) = length(l.storage)
-Base.eltype(::Type{T}) where {T<:Locations} = Int
-Base.eltype(x::Locations) = Int
+Base.eltype(::Type{T}) where {T<:Locations} = Locations{Int}
+Base.eltype(::Locations) = Locations{Int}
 Base.Tuple(x::Locations) = (x.storage...,)
 raw_locations(x::Locations) = x.storage
 
-function Base.iterate(l::Locations)
-    v, st = iterate(l.storage)
-    return Locations(v), st
-end
-
-function Base.iterate(l::Locations, st)
-    v, st = iterate(l.storage, st)
-    return Locations(v), st
+function Base.iterate(l::Locations, st::Int=1)
+    st > length(l) && return
+    return l[st], st + 1
 end
 
 struct LocationError <: Exception
@@ -220,8 +215,12 @@ CtrlLocations(x::LocationStorageTypes, configs::NTuple{L, UInt8}) where L =
     CtrlLocations(Locations(x), flags(configs...))
 
 Base.length(l::CtrlLocations) = length(l.storage)
-Base.iterate(l::CtrlLocations) = iterate(l.storage)
-Base.iterate(l::CtrlLocations, st) = iterate(l.storage, st)
+
+function Base.iterate(l::CtrlLocations, st::Int=1)
+    st > length(l) && return
+    return (l.storage[st], l.flags[st]), st + 1
+end
+
 raw_locations(l::CtrlLocations) = raw_locations(l.storage)
 
 function Base.show(io::IO, x::Locations)
