@@ -9,6 +9,14 @@ const LocationStorageTypes = Union{Int,NTuple{N,Int} where N,UnitRange{Int},Vect
 abstract type AbstractLocations end
 
 """
+    plain(locations)
+
+Return plain old location types that represents locations as integer ids,
+such as `Int`, `NTuple{N, Int}`, `UnitRange{Int}`.
+"""
+function plain end
+
+"""
     merge_locations(locations...)
 
 Construct a new `Locations` by merging two or more existing locations.
@@ -50,7 +58,7 @@ Base.length(l::Locations) = length(l.storage)
 Base.eltype(::Type{T}) where {T<:Locations} = Locations{Int}
 Base.eltype(::Locations) = Locations{Int}
 Base.Tuple(x::Locations) = (x.storage...,)
-raw_locations(x::Locations) = x.storage
+plain(x::Locations) = x.storage
 
 function Base.iterate(l::Locations, st::Int=1)
     st > length(l) && return
@@ -221,7 +229,7 @@ function Base.iterate(l::CtrlLocations, st::Int=1)
     return (l.storage[st], l.flags[st]), st + 1
 end
 
-raw_locations(l::CtrlLocations) = raw_locations(l.storage)
+plain(l::CtrlLocations) = plain(l.storage)
 
 function Base.show(io::IO, x::Locations)
     print(io, "Locations(")
