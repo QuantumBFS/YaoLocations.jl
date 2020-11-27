@@ -54,10 +54,6 @@ end
     @test collect(locs) == [Locations(k) for k in 2:5]
 
     ctrl = CtrlLocations((1, 2, 3, 4), (0x0, 0x1, 0x0, 0x0))
-    @test collect(ctrl) == [
-        (Locations(1), true),
-        (Locations(2), false),
-        (Locations(3), true),
-        (Locations(4), true),
-    ]
+    @test collect(ctrl) ==
+          [(Locations(1), true), (Locations(2), false), (Locations(3), true), (Locations(4), true)]
 end
