@@ -282,6 +282,14 @@ function merge_locations(l1::CtrlLocations, l2::CtrlLocations)
     CtrlLocations(merge_locations(l1.storage, l2.storage), merge_flags(l1.flags, l2.flags))
 end
 
+function merge_locations(l1::CtrlLocations, l2::Locations)
+    throw(LocationError("cannot merge CtrlLocations and Locations, convert to CtrlLocations to Locations"))
+end
+
+function merge_locations(l1::Locations, l2::CtrlLocations)
+    throw(LocationError("cannot merge CtrlLocations and Locations, convert to CtrlLocations to Locations"))
+end
+
 # NOTE: CtrlLocations can not be mapped by Locations
 @inline unsafe_mapping(parent::Locations, sub::CtrlLocations) =
     CtrlLocations(unsafe_mapping(parent, sub.storage), sub.flags)
@@ -294,6 +302,19 @@ Base.:(==)(l1::CtrlLocations, l2::CtrlLocations) =
 @inline function Base.getindex(parent::Locations, sub::AbstractLocations)
     map_check(parent, sub) || map_error(parent, sub)
     return unsafe_mapping(parent, sub)
+end
+
+Base.issorted(locs::AbstractLocations) = issorted(plain(locs))
+
+Base.sort(locs::Locations{Int}) = locs
+Base.sort(locs::Locations{UnitRange{Int}}) = locs
+
+function Base.sort(locs::Locations{<:Tuple})
+    return Locations(sort!(collect(locs.storage)))
+end
+
+function Base.sort(locs::Locations{Vector{Int}})
+    return Locations(sort!(locs.storage))
 end
 
 end # module
