@@ -283,11 +283,19 @@ function merge_locations(l1::CtrlLocations, l2::CtrlLocations)
 end
 
 function merge_locations(l1::CtrlLocations, l2::Locations)
-    throw(LocationError("cannot merge CtrlLocations and Locations, convert to CtrlLocations to Locations"))
+    throw(
+        LocationError(
+            "cannot merge CtrlLocations and Locations, convert to CtrlLocations to Locations",
+        ),
+    )
 end
 
 function merge_locations(l1::Locations, l2::CtrlLocations)
-    throw(LocationError("cannot merge CtrlLocations and Locations, convert to CtrlLocations to Locations"))
+    throw(
+        LocationError(
+            "cannot merge CtrlLocations and Locations, convert to CtrlLocations to Locations",
+        ),
+    )
 end
 
 # NOTE: CtrlLocations can not be mapped by Locations
