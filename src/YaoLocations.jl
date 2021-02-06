@@ -308,7 +308,7 @@ Base.:(==)(l1::CtrlLocations, l2::CtrlLocations) =
 
 # parent location has to be Locations since CtrlLocations can't be parent
 @inline function Base.getindex(parent::Locations, sub::AbstractLocations)
-    map_check(parent, sub) || map_error(parent, sub)
+    map_check(parent, sub)
     return unsafe_mapping(parent, sub)
 end
 
