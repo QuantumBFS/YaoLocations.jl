@@ -77,68 +77,68 @@ end
 # TODO: preserve sign when indexing
 # TODO: provide a @inlocation macro via Expr(:meta, :inlocation, true) so when we compile to Julia functions
 #       we can use unsafe_mapping directly
-@inline unsafe_mapping(parent::Locations{Int}, sub::Locations{Int}) = parent
-@inline unsafe_mapping(parent::Locations{Int}, sub::Locations{NTuple{N,Int}}) where {N} = parent
-@inline unsafe_mapping(parent::Locations{Int}, sub::Locations{UnitRange{Int}}) = parent
-@inline unsafe_mapping(parent::Locations{NTuple{N,Int}}, sub::Locations{Int}) where {N} =
+@noinline unsafe_mapping(parent::Locations{Int}, sub::Locations{Int}) = parent
+@noinline unsafe_mapping(parent::Locations{Int}, sub::Locations{NTuple{N,Int}}) where {N} = parent
+@noinline unsafe_mapping(parent::Locations{Int}, sub::Locations{UnitRange{Int}}) = parent
+@noinline unsafe_mapping(parent::Locations{NTuple{N,Int}}, sub::Locations{Int}) where {N} =
     Locations(@inbounds parent[sub.storage])
-@inline unsafe_mapping(parent::Locations{NTuple{N,Int}}, sub::Locations{NTuple{M,Int}}) where {N,M} =
+@noinline unsafe_mapping(parent::Locations{NTuple{N,Int}}, sub::Locations{NTuple{M,Int}}) where {N,M} =
     Locations(map(x -> @inbounds(parent[x]), sub.storage))
-@inline unsafe_mapping(parent::Locations{NTuple{N,Int}}, sub::Locations{UnitRange{Int}}) where {N} =
+@noinline unsafe_mapping(parent::Locations{NTuple{N,Int}}, sub::Locations{UnitRange{Int}}) where {N} =
     Locations(@inbounds parent[sub.storage])
-@inline unsafe_mapping(parent::Locations{UnitRange{Int}}, sub::Locations{Int}) =
+@noinline unsafe_mapping(parent::Locations{UnitRange{Int}}, sub::Locations{Int}) =
     Locations(@inbounds parent[sub.storage])
-@inline unsafe_mapping(parent::Locations{UnitRange{Int}}, sub::Locations{NTuple{N,Int}}) where {N} =
+@noinline unsafe_mapping(parent::Locations{UnitRange{Int}}, sub::Locations{NTuple{N,Int}}) where {N} =
     Locations(map(x -> @inbounds(parent[x]), sub.storage))
-@inline unsafe_mapping(parent::Locations{UnitRange{Int}}, sub::Locations{UnitRange{Int}}) =
+@noinline unsafe_mapping(parent::Locations{UnitRange{Int}}, sub::Locations{UnitRange{Int}}) =
     Locations(@inbounds parent[sub.storage])
 
 @inline map_error(parent, sub) = throw(LocationError("got $sub in parent space $parent"))
 
-@noinline function map_check(parent, sub)
+@inline function map_check(parent, sub)
     map_check_nothrow(parent, sub) || map_error(parent, sub)
 end
 
-function map_check_nothrow(parent::Locations{Int}, sub::Locations{Int})
+@noinline function map_check_nothrow(parent::Locations{Int}, sub::Locations{Int})
     sub.storage == 1
 end
 
-function map_check_nothrow(parent::Locations{Int}, sub::Locations{Tuple{Int}})
+@noinline function map_check_nothrow(parent::Locations{Int}, sub::Locations{Tuple{Int}})
     sub.storage[1] == 1
 end
 
-function map_check_nothrow(parent::Locations{Int}, sub::Locations{NTuple{N,Int}}) where {N}
+@noinline function map_check_nothrow(parent::Locations{Int}, sub::Locations{NTuple{N,Int}}) where {N}
     false
 end
 
-function map_check_nothrow(parent::Locations{Int}, sub::Locations{UnitRange{Int}})
+@noinline function map_check_nothrow(parent::Locations{Int}, sub::Locations{UnitRange{Int}})
     (length(sub) == 1) && (sub.storage.start == 1)
 end
 
-function map_check_nothrow(parent::Locations{NTuple{N,Int}}, sub::Locations{Int}) where {N}
+@noinline function map_check_nothrow(parent::Locations{NTuple{N,Int}}, sub::Locations{Int}) where {N}
     1 <= sub.storage <= N
 end
 
-function map_check_nothrow(
+@noinline function map_check_nothrow(
     parent::Locations{NTuple{N,Int}},
     sub::Locations{NTuple{M,Int}},
 ) where {N,M}
     all(x -> (1 <= x <= N), sub.storage)
 end
 
-function map_check_nothrow(parent::Locations{NTuple{N,Int}}, sub::Locations{UnitRange{Int}}) where {N}
+@noinline function map_check_nothrow(parent::Locations{NTuple{N,Int}}, sub::Locations{UnitRange{Int}}) where {N}
     (1 <= sub.storage.start) && (sub.storage.stop <= N)
 end
 
-function map_check_nothrow(parent::Locations{UnitRange{Int}}, sub::Locations{Int})
+@noinline function map_check_nothrow(parent::Locations{UnitRange{Int}}, sub::Locations{Int})
     1 <= sub.storage <= length(parent)
 end
 
-function map_check_nothrow(parent::Locations{UnitRange{Int}}, sub::Locations{NTuple{N,Int}}) where {N}
+@noinline function map_check_nothrow(parent::Locations{UnitRange{Int}}, sub::Locations{NTuple{N,Int}}) where {N}
     all(x -> (1 <= x <= length(parent)), sub.storage)
 end
 
-function map_check_nothrow(parent::Locations{UnitRange{Int}}, sub::Locations{UnitRange{Int}})
+@noinline function map_check_nothrow(parent::Locations{UnitRange{Int}}, sub::Locations{UnitRange{Int}})
     (1 <= sub.storage.start) && (sub.storage.stop <= length(parent))
 end
 
@@ -299,9 +299,9 @@ function merge_locations(l1::Locations, l2::CtrlLocations)
 end
 
 # NOTE: CtrlLocations can not be mapped by Locations
-@inline unsafe_mapping(parent::Locations, sub::CtrlLocations) =
+@noinline unsafe_mapping(parent::Locations, sub::CtrlLocations) =
     CtrlLocations(unsafe_mapping(parent, sub.storage), sub.flags)
-map_check_nothrow(parent::Locations, sub::CtrlLocations) = map_check_nothrow(parent, sub.storage)
+@noinline map_check_nothrow(parent::Locations, sub::CtrlLocations) = map_check_nothrow(parent, sub.storage)
 
 Base.:(==)(l1::CtrlLocations, l2::CtrlLocations) =
     (l1.storage == l2.storage) && (l1.flags == l2.flags)
