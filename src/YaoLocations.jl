@@ -69,7 +69,7 @@ struct LocationError <: Exception
     msg::String
 end
 
-function merge_locations(l1::Locations, l2::Locations)
+@noinline function merge_locations(l1::Locations, l2::Locations)
     Locations((l1.storage..., l2.storage...))
 end
 
@@ -278,7 +278,7 @@ function print_locations(io::IO, x::CtrlLocations)
     end
 end
 
-function merge_locations(l1::CtrlLocations, l2::CtrlLocations)
+@noinline function merge_locations(l1::CtrlLocations, l2::CtrlLocations)
     CtrlLocations(merge_locations(l1.storage, l2.storage), merge_flags(l1.flags, l2.flags))
 end
 
