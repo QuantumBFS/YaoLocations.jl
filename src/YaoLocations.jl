@@ -82,8 +82,10 @@ end
 @noinline unsafe_mapping(parent::Locations{Int}, sub::Locations{UnitRange{Int}}) = parent
 @noinline unsafe_mapping(parent::Locations{NTuple{N,Int}}, sub::Locations{Int}) where {N} =
     Locations(@inbounds parent[sub.storage])
-@noinline unsafe_mapping(parent::Locations{NTuple{N,Int}}, sub::Locations{NTuple{M,Int}}) where {N,M} =
-    Locations(map(x -> @inbounds(parent[x]), sub.storage))
+@noinline unsafe_mapping(
+    parent::Locations{NTuple{N,Int}},
+    sub::Locations{NTuple{M,Int}},
+) where {N,M} = Locations(map(x -> @inbounds(parent[x]), sub.storage))
 @noinline unsafe_mapping(parent::Locations{NTuple{N,Int}}, sub::Locations{UnitRange{Int}}) where {N} =
     Locations(@inbounds parent[sub.storage])
 @noinline unsafe_mapping(parent::Locations{UnitRange{Int}}, sub::Locations{Int}) =
@@ -126,7 +128,10 @@ end
     all(x -> (1 <= x <= N), sub.storage)
 end
 
-@noinline function map_check_nothrow(parent::Locations{NTuple{N,Int}}, sub::Locations{UnitRange{Int}}) where {N}
+@noinline function map_check_nothrow(
+    parent::Locations{NTuple{N,Int}},
+    sub::Locations{UnitRange{Int}},
+) where {N}
     (1 <= sub.storage.start) && (sub.storage.stop <= N)
 end
 
@@ -134,11 +139,17 @@ end
     1 <= sub.storage <= length(parent)
 end
 
-@noinline function map_check_nothrow(parent::Locations{UnitRange{Int}}, sub::Locations{NTuple{N,Int}}) where {N}
+@noinline function map_check_nothrow(
+    parent::Locations{UnitRange{Int}},
+    sub::Locations{NTuple{N,Int}},
+) where {N}
     all(x -> (1 <= x <= length(parent)), sub.storage)
 end
 
-@noinline function map_check_nothrow(parent::Locations{UnitRange{Int}}, sub::Locations{UnitRange{Int}})
+@noinline function map_check_nothrow(
+    parent::Locations{UnitRange{Int}},
+    sub::Locations{UnitRange{Int}},
+)
     (1 <= sub.storage.start) && (sub.storage.stop <= length(parent))
 end
 
@@ -301,7 +312,8 @@ end
 # NOTE: CtrlLocations can not be mapped by Locations
 @noinline unsafe_mapping(parent::Locations, sub::CtrlLocations) =
     CtrlLocations(unsafe_mapping(parent, sub.storage), sub.flags)
-@noinline map_check_nothrow(parent::Locations, sub::CtrlLocations) = map_check_nothrow(parent, sub.storage)
+@noinline map_check_nothrow(parent::Locations, sub::CtrlLocations) =
+    map_check_nothrow(parent, sub.storage)
 
 Base.:(==)(l1::CtrlLocations, l2::CtrlLocations) =
     (l1.storage == l2.storage) && (l1.flags == l2.flags)
